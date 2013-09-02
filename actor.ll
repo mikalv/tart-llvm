@@ -66,7 +66,7 @@ declare i32 @fprintf(%struct._IO_FILE*, i8*, ...) nounwind
 declare void @llvm.trap() noreturn nounwind
 @.str.halted = private unnamed_addr constant [21 x i8] c"%s **** HALTED ****\0A\00", align 1
 define cc 10 void @halt(i8* %msg) #0 {
-    %stderr = load %struct._IO_FILE** @stderr, align 8
+    %stderr = load %struct._IO_FILE** @stderr
     call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %stderr, i8* getelementptr inbounds ([21 x i8]* @.str.halted, i32 0, i32 0), i8* %msg)
     call void @llvm.trap()
     unreachable
@@ -112,15 +112,15 @@ define cc 10 %actor* @pair_new(%config* %cfg, %actor* %h, %actor* %t) inlinehint
     ; Pair p = (Pair)config_create(cfg, sizeof(PAIR), beh_pair)
     ; #define config_create(cfg, size, beh)   (((cfg)->create)((cfg), (size), (beh)))
     %cfg.create.fpp = getelementptr inbounds %config* %cfg, i32 0, i32 2
-    %cfg.create.fptr = load %create** %cfg.create.fpp, align 8
+    %cfg.create.fptr = load %create** %cfg.create.fpp
     %p.1 = tail call cc 10 %actor* %cfg.create.fptr(%config* %cfg, i64 3, %behavior* @beh_pair)
     %p.2 = bitcast %actor* %p.1 to %pair*
     ; p->h = NIL;
     %p.h = getelementptr inbounds %pair* %p.2, i32 0, i32 1
-    store %actor* %h, %actor** %p.h, align 8
+    store %actor* %h, %actor** %p.h
     ; p->t = NIL;
     %p.t = getelementptr inbounds %pair* %p.2, i32 0, i32 2
-    store %actor* %t, %actor** %p.t, align 8
+    store %actor* %t, %actor** %p.t
     ; return (Actor)p;
     ret %actor* %p.1
 }
@@ -133,15 +133,15 @@ define cc 10 %actor* @deque_new(%config* %cfg) inlinehint {
     ; Pair p = (Pair)config_create(cfg, sizeof(PAIR), beh_deque)
     ; #define config_create(cfg, size, beh)   (((cfg)->create)((cfg), (size), (beh)))
     %cfg.create.fpp = getelementptr inbounds %config* %cfg, i32 0, i32 2
-    %cfg.create.fptr = load %create** %cfg.create.fpp, align 8
+    %cfg.create.fptr = load %create** %cfg.create.fpp
     %p.1 = tail call cc 10 %actor* %cfg.create.fptr(%config* %cfg, i64 3, %behavior* @beh_deque)
     %p.2 = bitcast %actor* %p.1 to %pair*
     ; p->h = NIL;
     %p.h = getelementptr inbounds %pair* %p.2, i32 0, i32 1
-    store %actor* bitcast (%pair* @the_nil_pair_actor to %actor*), %actor** %p.h, align 8
+    store %actor* bitcast (%pair* @the_nil_pair_actor to %actor*), %actor** %p.h
     ; p->t = NIL;
     %p.t = getelementptr inbounds %pair* %p.2, i32 0, i32 2
-    store %actor* bitcast (%pair* @the_nil_pair_actor to %actor*), %actor** %p.t, align 8
+    store %actor* bitcast (%pair* @the_nil_pair_actor to %actor*), %actor** %p.t
     ; return (Actor)p;
     ret %actor* %p.1
 }
@@ -158,7 +158,7 @@ proceed:
     ; return ((q->h == NIL) ? a_true : a_false);
     %q = bitcast %actor* %queue to %pair*
     %q.h.pp = getelementptr inbounds %pair* %q, i32 0, i32 1
-    %q.h.ptr = load %actor** %q.h.pp, align 8
+    %q.h.ptr = load %actor** %q.h.pp
     %head_is_not_NIL = icmp ne %actor* %q.h.ptr, bitcast (%pair* @the_nil_pair_actor to %actor*)
     br i1 %head_is_not_NIL, label %deque_not_empty, label %deque_empty
 
@@ -178,7 +178,7 @@ define cc 10 void @deque_give(%config* %cfg, %actor* %queue, %actor* %item) inli
     ; #define BEH(a)      (((Actor)(a))->beh)
     %cfg.a = bitcast %config* %cfg to %actor*
     %cfg.a.beh.fpp = getelementptr inbounds %actor* %cfg.a, i32 0, i32 0
-    %cfg.a.beh.fptr = load %behavior** %cfg.a.beh.fpp, align 8
+    %cfg.a.beh.fptr = load %behavior** %cfg.a.beh.fpp
     %beh_not_equal = icmp ne %behavior* @beh_deque, %cfg.a.beh.fptr
     br i1 %beh_not_equal, label %halt, label %proceed
 
@@ -188,9 +188,9 @@ proceed:
     ; if (q->h == NIL)
     %q = bitcast %actor* %queue to %pair*
     %q.h.pp = getelementptr inbounds %pair* %q, i32 0, i32 1
-    %q.h.ptr = load %actor** %q.h.pp, align 8
+    %q.h.ptr = load %actor** %q.h.pp
     %q.t.pp = getelementptr inbounds %pair* %q, i32 0, i32 2
-    %q.t.ptr = load %actor** %q.t.pp, align 8
+    %q.t.ptr = load %actor** %q.t.pp
     %q.t.3 = bitcast %actor* %q.t.ptr to %pair*
     %head_is_not_NIL = icmp ne %actor* %q.h.ptr, bitcast (%pair* @the_nil_pair_actor to %actor*)
     br i1 %head_is_not_NIL, label %deque_not_empty, label %deque_empty
@@ -199,17 +199,17 @@ deque_not_empty:
     ; Pair t = (Pair)(q->t);
     ; t->t = p;
     %t.pp = getelementptr inbounds %pair* %q.t.3, i32 0, i32 2
-    store %actor* %p.ptr, %actor** %t.pp, align 8
+    store %actor* %p.ptr, %actor** %t.pp
     br label %finalize
 
 deque_empty:
     ; q->h = p;
-    store %actor* %p.ptr, %actor** %q.h.pp, align 8
+    store %actor* %p.ptr, %actor** %q.h.pp
     br label %finalize
 
 finalize:
     ; q->t = p;
-    store %actor* %p.ptr, %actor** %q.t.pp, align 8
+    store %actor* %p.ptr, %actor** %q.t.pp
     ret void    
 
 halt:
@@ -228,19 +228,19 @@ deque_not_empty:
     ; Pair p = (Pair)(q->h);
     %q = bitcast %actor* %queue to %pair*
     %q.h.pp = getelementptr inbounds %pair* %q, i32 0, i32 1
-    %q.h.ptr = load %actor** %q.h.pp, align 8
+    %q.h.ptr = load %actor** %q.h.pp
     %p = bitcast %actor* %q.h.ptr to %pair*
     ; Actor item = p->h;
     %p.h.pp = getelementptr inbounds %pair* %p, i32 0, i32 1
-    %item = load %actor** %p.h.pp, align 8
+    %item = load %actor** %p.h.pp
     ; q->h = p->t;
     %p.t.pp = getelementptr inbounds %pair* %p, i32 0, i32 2
-    %p.t.ptr = load %actor** %p.t.pp, align 8
+    %p.t.ptr = load %actor** %p.t.pp
     store %actor* %p.t.ptr, %actor** %q.h.pp
     ; config_destroy(cfg, (Actor)p);
     ; #define         config_destroy(cfg, victim)     (((cfg)->destroy)((cfg), (victim)))
     %cfg.destroy.fpp = getelementptr inbounds %config* %cfg, i32 0, i32 3
-    %cfg.destroy.fptr = load %destroy** %cfg.destroy.fpp, align 8
+    %cfg.destroy.fptr = load %destroy** %cfg.destroy.fpp
     tail call cc 10 void %cfg.destroy.fptr(%config* %cfg, %actor* %q.h.ptr)
     ; return item;
     ret %actor* %item
@@ -254,7 +254,7 @@ define cc 10 %actor* @actor_new(%config* %cfg, %behavior* %beh) inlinehint {
     ; return config_create(cfg, sizeof(ACTOR), beh);
     ; #define config_create(cfg, size, beh)   (((cfg)->create)((cfg), (size), (beh)))
     %cfg.create.fpp = getelementptr inbounds %config* %cfg, i32 0, i32 2
-    %cfg.create.fptr = load %create** %cfg.create.fpp, align 8
+    %cfg.create.fptr = load %create** %cfg.create.fpp
     %a = tail call cc 10 %actor* %cfg.create.fptr(%config* %cfg, i64 1, %behavior* %beh)
     ret %actor* %a
 }
@@ -262,7 +262,7 @@ define cc 10 %actor* @value_new(%config* %cfg, %behavior* %beh, %any %data) inli
     ; Value v = (Value)config_create(cfg, sizeof(VALUE), beh);
     ; #define config_create(cfg, size, beh)   (((cfg)->create)((cfg), (size), (beh)))
     %cfg.create.fpp = getelementptr inbounds %config* %cfg, i32 0, i32 2
-    %cfg.create.fptr = load %create** %cfg.create.fpp, align 8
+    %cfg.create.fptr = load %create** %cfg.create.fpp
     %v.1 = tail call cc 10 %actor* %cfg.create.fptr(%config* %cfg, i64 2, %behavior* %beh)
     ; DATA(v) = data;
     ; #define DATA(v)     (((Value)(v))->data)
@@ -276,7 +276,7 @@ define cc 10 %actor* @serial_with_value(%config* %cfg, %actor* %v) inlinehint {
     ; Serial s = (Serial)config_create(cfg, sizeof(SERIAL), act_serial);
     ; #define config_create(cfg, size, beh)   (((cfg)->create)((cfg), (size), (beh)))
     %cfg.create.fpp = getelementptr inbounds %config* %cfg, i32 0, i32 2
-    %cfg.create.fptr = load %create** %cfg.create.fpp, align 8
+    %cfg.create.fptr = load %create** %cfg.create.fpp
     %s.1 = tail call cc 10 %actor* %cfg.create.fptr(%config* %cfg, i64 3, %behavior* @act_serial)
     ; s->current_behavior = v; // an "unseralized" behavior actor
     %s.2 = bitcast %actor* %s.1 to %serial*
@@ -297,7 +297,7 @@ define cc 10 void @actor_become(%actor* %s, %actor* %v) inlinehint {
     ; if (act_serial != BEH(s)) { halt("actor_become: serialized actor required"); }
     ; #define BEH(a)      (((Actor)(a))->beh)
     %s.beh.fpp = getelementptr inbounds %actor* %s, i32 0, i32 0
-    %s.beh.fptr = load %behavior** %s.beh.fpp, align 8
+    %s.beh.fptr = load %behavior** %s.beh.fpp
     %beh_not_equal = icmp ne %behavior* @act_serial, %s.beh.fptr
     br i1 %beh_not_equal, label %halt, label %proceed 
 
@@ -345,7 +345,7 @@ define cc 10 %actor* @event_new(%config* %cfg, %actor* %target, %actor* %msg) in
     ; #define BEH(a)      (((Actor)(a))->beh)
     %cfg.a = bitcast %config* %cfg to %actor*
     %cfg.a.beh.fpp = getelementptr inbounds %actor* %cfg.a, i32 0, i32 0
-    %cfg.a.beh.fptr = load %behavior** %cfg.a.beh.fpp, align 8
+    %cfg.a.beh.fptr = load %behavior** %cfg.a.beh.fpp
     %beh_not_equal = icmp ne %behavior* @beh_config, %cfg.a.beh.fptr
     br i1 %beh_not_equal, label %halt, label %proceed
 
@@ -353,7 +353,7 @@ proceed:
     ; Event e = (Event)config_create(cfg, sizeof(EVENT), beh_event);
     ; #define config_create(cfg, size, beh)   (((cfg)->create)((cfg), (size), (beh)))
     %cfg.create.fpp = getelementptr inbounds %config* %cfg, i32 0, i32 2
-    %cfg.create.fptr = load %create** %cfg.create.fpp, align 8
+    %cfg.create.fptr = load %create** %cfg.create.fpp
     %e.1 = tail call cc 10 %actor* %cfg.create.fptr(%config* %cfg, i64 4, %behavior* @beh_event)
     ; e->sponsor = cfg;
     %e.2 = bitcast %actor* %e.1 to %event*
@@ -391,7 +391,7 @@ define internal cc 10 %actor* @root_config_create(%config* %cfg, i64 %n_bytes, %
     ; BEH(a) = beh;
     ; #define BEH(a)      (((Actor)(a))->beh)
     %a.beh.fpp = getelementptr inbounds %actor* %a.2, i32 0, i32 0
-    store %behavior* %beh, %behavior** %a.beh.fpp, align 8
+    store %behavior* %beh, %behavior** %a.beh.fpp
     ; return a;
     ret %actor* %a.2
 }
@@ -407,7 +407,7 @@ define internal cc 10 void @root_config_send(%config* %cfg, %actor* %target, %ac
     ; #define         config_enqueue(cfg, e)          (deque_give((cfg), (cfg)->events, (e)))
     %e = tail call cc 10 %actor* @event_new(%config* %cfg, %actor* %target, %actor* %msg)
     %cfg.events.pp = getelementptr inbounds %config* %cfg, i32 0, i32 5
-    %cfg.events.ptr = load %actor** %cfg.events.pp, align 8
+    %cfg.events.ptr = load %actor** %cfg.events.pp
     tail call cc 10 void @deque_give(%config* %cfg, %actor* %cfg.events.ptr, %actor* %e)
     ret void
 }
@@ -420,23 +420,23 @@ define cc 10 %config* @config_new() {
     ; #define BEH(a)      (((Actor)(a))->beh)
     %cfg.a = bitcast %config* %cfg.2 to %actor*
     %cfg.a.beh.fpp = getelementptr inbounds %actor* %cfg.a, i32 0, i32 0
-    store %behavior* @beh_config, %behavior** %cfg.a.beh.fpp, align 8
+    store %behavior* @beh_config, %behavior** %cfg.a.beh.fpp
     ; cfg->fail = root_config_fail; // error reporting procedure
     %cfg.fail.fpp = getelementptr inbounds %config* %cfg.2, i32 0, i32 1
-    store %fail* @root_config_fail, %fail** %cfg.fail.fpp, align 8
+    store %fail* @root_config_fail, %fail** %cfg.fail.fpp
     ; cfg->create = root_config_create; // actor creation procedure
     %cfg.create.fpp = getelementptr inbounds %config* %cfg.2, i32 0, i32 2
-    store %create* @root_config_create, %create** %cfg.create.fpp, align 8
+    store %create* @root_config_create, %create** %cfg.create.fpp
     ; cfg->destroy = root_config_destroy; // reclaim actor resources
     %cfg.destroy.fpp = getelementptr inbounds %config* %cfg.2, i32 0, i32 3
-    store %destroy* @root_config_destroy, %destroy** %cfg.destroy.fpp, align 8
+    store %destroy* @root_config_destroy, %destroy** %cfg.destroy.fpp
     ; cfg->send = root_config_send; // event creation procedure
     %cfg.send.fpp = getelementptr inbounds %config* %cfg.2, i32 0, i32 4
-    store %send* @root_config_send, %send** %cfg.send.fpp, align 8
+    store %send* @root_config_send, %send** %cfg.send.fpp
     ; cfg->events = deque_new(cfg);
     %cfg.events = getelementptr inbounds %config* %cfg.2, i32 0, i32 5
     %deque = tail call cc 10 %actor* @deque_new(%config* %cfg.2)
-    store %actor* %deque, %actor** %cfg.events, align 8
+    store %actor* %deque, %actor** %cfg.events
     ; return cfg;
     ret %config* %cfg.2
 }
@@ -446,7 +446,7 @@ define cc 10 %actor* @config_dequeue(%config* %cfg) inlinehint {
     ; #define BEH(a)      (((Actor)(a))->beh)
     %cfg.a = bitcast %config* %cfg to %actor*
     %cfg.a.beh.fpp = getelementptr inbounds %actor* %cfg.a, i32 0, i32 0
-    %cfg.a.beh.fptr = load %behavior** %cfg.a.beh.fpp, align 8
+    %cfg.a.beh.fptr = load %behavior** %cfg.a.beh.fpp
     %beh_not_equal = icmp ne %behavior* @beh_config, %cfg.a.beh.fptr
     br i1 %beh_not_equal, label %halt, label %proceed
 
@@ -454,7 +454,7 @@ proceed:
     ; if (deque_empty_p(cfg, cfg->events) != a_false)
     ; #define a_false ((Actor)(&the_false_actor))
     %cfg.events.pp = getelementptr inbounds %config* %cfg, i32 0, i32 5
-    %cfg.events.ptr = load %actor** %cfg.events.pp, align 8
+    %cfg.events.ptr = load %actor** %cfg.events.pp
     %empty_check_result = tail call cc 10 %actor* @deque_empty_p(%config* %cfg, %actor* %cfg.events.ptr)
     %is_not_empty = icmp eq %actor* %empty_check_result, @the_false_actor
     br i1 %is_not_empty, label %take, label %shortcircuit    
@@ -476,7 +476,7 @@ define cc 10 %actor* @config_dispatch(%config* %cfg) inlinehint {
     ; if (beh_event == BEH(a))
     ; #define BEH(a)      (((Actor)(a))->beh)
     %a.beh.fpp = getelementptr inbounds %actor* %a, i32 0, i32 0
-    %a.beh.fptr = load %behavior** %a.beh.fpp, align 8
+    %a.beh.fptr = load %behavior** %a.beh.fpp
     %beh_equal = icmp eq %behavior* @beh_event, %a.beh.fptr 
     br i1 %beh_equal, label %proceed, label %finalize
 
@@ -488,9 +488,9 @@ proceed:
     ; #define BEH(a)      (((Actor)(a))->beh)
     ; #define SELF(e)     (((Event)(e))->target)
     %self.pp = getelementptr inbounds %event* %e, i32 0, i32 2
-    %self.ptr = load %actor** %self.pp, align 8
+    %self.ptr = load %actor** %self.pp
     %beh.fpp = getelementptr inbounds %actor* %self.ptr, i32 0, i32 0
-    %beh.fptr = load %behavior** %beh.fpp, align 8
+    %beh.fptr = load %behavior** %beh.fpp
     tail call cc 10 void %beh.fptr(%event* %e)
     br label %finalize
 
@@ -513,7 +513,7 @@ define internal cc 10 void @comb_false(%event* %e) {
 @.str.a_halt_eq = private unnamed_addr constant [13 x i8] c"a_halt = %p\0A\00", align 1
 @.str.a_ignore_eq = private unnamed_addr constant [15 x i8] c"a_ignore = %p\0A\00", align 1
 define void @run_tests() #2 {
-    %stderr = load %struct._IO_FILE** @stderr, align 8
+    %stderr = load %struct._IO_FILE** @stderr
     call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %stderr, i8* getelementptr inbounds ([28 x i8]* @.str.tart_unit_tests, i32 0, i32 0))
     call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %stderr, i8* getelementptr inbounds ([10 x i8]* @.str.NIL_eq, i32 0, i32 0), i8* bitcast(%pair* @the_nil_pair_actor to i8*))
     call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %stderr, i8* getelementptr inbounds ([14 x i8]* @.str.NOTHING_eq, i32 0, i32 0), i8* bitcast(%value* @the_halt_actor to i8*))
